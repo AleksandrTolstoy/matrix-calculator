@@ -36,8 +36,8 @@ MatrixType = Optional[List[List[float]]]
 
 
 class Matrix(list):
-    horizontal: int = NaturalNumber()
-    vertical: int = NaturalNumber()
+    horizontal = NaturalNumber()
+    vertical = NaturalNumber()
 
     def __init__(self, vertical: int, horizontal: int, math_object: MatrixType = None) -> None:
         self.horizontal = horizontal
@@ -74,30 +74,30 @@ class Matrix(list):
 
 
 NumericType = Union[float, int]
-MathType = Union[Matrix, NumericType]
+MathType = Union[Matrix, float, int]
 
 
-class MathHandler:
+class MatrixCalculator:
 
     @staticmethod
     def _initialize_empty_matrix(vertical: int):
         return [[] for _ in range(vertical)]
 
     @staticmethod
-    def search_max_or_min(a: Matrix, operator: Union[gt, lt]) -> Union[float, int]:
+    def search_max_or_min(a: Matrix, operator) -> NumericType:
         if not Matrix.is_vector(a):
             raise ArithmeticError(f'Not a vector {a=}')
 
         a = a[0]
         result = a[0]
-        for elem in a[1:]:
-            if operator(elem, result):
-                result = elem
+        for element in a[1:]:
+            if operator(element, result):
+                result = element
 
         return result
 
     @staticmethod
-    def scalar_product(a: Matrix, b: Matrix) -> Union[float, int]:
+    def _scalar_product(a: Matrix, b: Matrix) -> NumericType:
         if not Matrix.is_vector(a):
             raise ArithmeticError(f'Not a vector {a=}')
 
@@ -108,17 +108,17 @@ class MathHandler:
 
         return result
 
-    def _constant_mul(self, constant: Union[float, int], a: Matrix) -> Matrix:
+    def _constant_mul(self, constant: NumericType, a: Matrix) -> Matrix:
         matrix = self._initialize_empty_matrix(a.vertical)
         for row in range(a.vertical):
-            for col in range(a.horizontal):
-                matrix[row].append(constant * a[row][col])
+            for column in range(a.horizontal):
+                matrix[row].append(constant * a[row][column])
 
         return Matrix(a.vertical, a.horizontal, matrix)
 
     def _matrix_mul(self, a: Matrix, b: Matrix) -> MathType:
         if a.vertical == 1 and b.vertical == 1:
-            return self.scalar_product(a, b)
+            return self._scalar_product(a, b)
         elif a.horizontal != b.vertical:
             raise ArithmeticError(
                 'The number of columns in the first matrix should equal the number of rows in the second')
@@ -143,7 +143,7 @@ class MathHandler:
         else:
             return a * b
 
-    def _divide(self, a: MathType, b: MathType) -> MathType:
+    def _divide(self, a: MathType, b: NumericType) -> MathType:
         if type(b) in (float, int) and isinstance(a, Matrix):
             return self._constant_mul(constant=1 / b, a=a)
 
@@ -159,8 +159,8 @@ class MathHandler:
 
         matrix = self._initialize_empty_matrix(a.vertical)
         for row in range(a.vertical):
-            for col in range(a.horizontal):
-                matrix[row].append(operator(a[row][col], b[row][col]))
+            for column in range(a.horizontal):
+                matrix[row].append(operator(a[row][column], b[row][column]))
 
         return Matrix(a.vertical, a.horizontal, matrix)
 
