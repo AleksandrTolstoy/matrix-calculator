@@ -1,6 +1,6 @@
-import operator as op
-from typing import List, Optional, Union, Any
 import time
+from operator import add, sub, gt, lt
+from typing import List, Optional, Union, Any
 
 
 def logged(time_format='%b %d %Y - %H:%M:%S'):
@@ -12,10 +12,11 @@ def logged(time_format='%b %d %Y - %H:%M:%S'):
             end_time = time.time()
             print(f'- Finished <{func.__name__}>, execution time = {end_time - start_time}s ')
             return result
+
         decorated_func.__name__ = func.__name__
         return decorated_func
-    return decorator
 
+    return decorator
 
 
 class NaturalNumber:
@@ -41,6 +42,7 @@ class Matrix(list):
     def __init__(self, vertical: int, horizontal: int, math_object: MatrixType = None) -> None:
         self.horizontal = horizontal
         self.vertical = vertical
+
         if math_object:
             super().__init__(math_object)
         else:
@@ -52,6 +54,10 @@ class Matrix(list):
                     raise ValueError('Incorrect data input')
                 self.append(row)
 
+    @staticmethod
+    def is_vector(matrix):
+        return True if matrix.vertical == 1 else False
+
     def transpose(self) -> 'Matrix':
         vertical = self.horizontal
         horizontal = self.vertical
@@ -59,7 +65,7 @@ class Matrix(list):
         return Matrix(vertical, horizontal, matrix)
 
     def __repr__(self) -> str:
-        string = ''
+        string = '\n'
         for row in range(self.vertical):
             for column in range(self.horizontal):
                 string += f'{self[row][column]} '
@@ -67,7 +73,8 @@ class Matrix(list):
         return string
 
 
-MathType = Union[Matrix, float, int]
+NumericType = Union[float, int]
+MathType = Union[Matrix, NumericType]
 
 
 class MathHandler:
@@ -77,21 +84,22 @@ class MathHandler:
         return [[] for _ in range(vertical)]
 
     @staticmethod
-    def search_max_or_min(a: Matrix, operator) -> Union[float, int]:
-        if a.vertical != 1:
-            raise ArithmeticError('not a vector')
+    def search_max_or_min(a: Matrix, operator: Union[gt, lt]) -> Union[float, int]:
+        if not Matrix.is_vector(a):
+            raise ArithmeticError(f'Not a vector {a=}')
 
         a = a[0]
         result = a[0]
         for elem in a[1:]:
             if operator(elem, result):
                 result = elem
+
         return result
 
     @staticmethod
     def scalar_product(a: Matrix, b: Matrix) -> Union[float, int]:
-        if a.vertical != 1:
-            raise ArithmeticError('not a vector')
+        if not Matrix.is_vector(a):
+            raise ArithmeticError(f'Not a vector {a=}')
 
         a, b = a[0], b[0]
         result = 0
@@ -168,15 +176,15 @@ class MathHandler:
 
     def controller(self, a: MathType, operation: str, b: Optional[MathType] = None) -> MathType:
         operators = {
-            '+': lambda: self._add_or_sub(a, op.add, b),
-            '-': lambda: self._add_or_sub(a, op.sub, b),
+            '+': lambda: self._add_or_sub(a, add, b),
+            '-': lambda: self._add_or_sub(a, sub, b),
             '*': lambda: self._multiply(a, b),
             '/': lambda: self._divide(a, b)
         }
 
         operations = {
-            'max': lambda: self.search_max_or_min(a, op.gt),
-            'min': lambda: self.search_max_or_min(a, op.lt)
+            'max': lambda: self.search_max_or_min(a, gt),
+            'min': lambda: self.search_max_or_min(a, lt)
         }
 
         if req_func := operators.get(operation):
