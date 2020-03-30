@@ -3,15 +3,19 @@ from typing import List, Optional, Union, Any
 import time
 
 
-def benchmark(func):
-    def wrapper(*args, **kwargs):
-        start = time.time()
-        return_value = func(*args, **kwargs)
-        end = time.time()
-        print('[*] Время выполнения: {} секунд.'.format(end - start))
-        return return_value
+def logged(time_format='%b %d %Y - %H:%M:%S'):
+    def decorator(func):
+        def decorated_func(*args, **kwargs):
+            print(f'- Running <{func.__name__}> on {time.strftime(time_format)} ')
+            start_time = time.time()
+            result = func(*args, **kwargs)
+            end_time = time.time()
+            print(f'- Finished <{func.__name__}>, execution time = {end_time - start_time}s ')
+            return result
+        decorated_func.__name__ = func.__name__
+        return decorated_func
+    return decorator
 
-    return wrapper
 
 
 class NaturalNumber:
