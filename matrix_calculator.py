@@ -101,18 +101,10 @@ class MatrixCalculator:
         if not Matrix.is_vector(a):
             raise ArithmeticError(f'Not a vector {a=}')
 
-        a, b = a[0], b[0]
-        result = 0
-        for index in range(len(a)):
-            result += a[index] * b[index]
-
-        return result
+        return sum(map(lambda a_elem, b_elem: a_elem*b_elem, a[0], b[0]))
 
     def _constant_mul(self, constant: NumericType, a: Matrix) -> Matrix:
-        matrix = self._initialize_empty_matrix(a.vertical)
-        for row in range(a.vertical):
-            for column in range(a.horizontal):
-                matrix[row].append(constant * a[row][column])
+        matrix = [[constant*a[row][column] for column in range(a.horizontal)] for row in range(a.vertical)]
 
         return Matrix(a.vertical, a.horizontal, matrix)
 
