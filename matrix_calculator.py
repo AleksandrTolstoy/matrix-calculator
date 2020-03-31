@@ -1,10 +1,12 @@
 import time
 from operator import add, sub
 from typing import List, Optional, Union, Any
+from functools import wraps
 
 
 def logged(time_format='%b %d %Y - %H:%M:%S', separator=''):
     def decorator(func):
+        @wraps(func)
         def decorated_func(*args, **kwargs):
             print(f'{separator}- Running <{func.__qualname__}> on {time.strftime(time_format)}')
             start_time = time.time()
@@ -12,10 +14,7 @@ def logged(time_format='%b %d %Y - %H:%M:%S', separator=''):
             end_time = time.time()
             print(f'- Finished class.<{func.__qualname__}>, execution time = {end_time - start_time}s{separator}')
             return result
-
-        decorated_func.__name__ = func.__name__
         return decorated_func
-
     return decorator
 
 
