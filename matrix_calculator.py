@@ -1,16 +1,17 @@
 import time
-from operator import add, sub, gt, lt
+from operator import add, sub
 from typing import List, Optional, Union, Any
+from random import randint
 
 
 def logged(time_format='%b %d %Y - %H:%M:%S'):
     def decorator(func):
         def decorated_func(*args, **kwargs):
-            print(f'- Running <{func.__name__}> on {time.strftime(time_format)} ')
+            print(f'- Running <{func.__name__}> on {time.strftime(time_format)}')
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            print(f'- Finished <{func.__name__}>, execution time = {end_time - start_time}s ')
+            print(f'- Finished <{func.__name__}>, execution time = {end_time - start_time}s\n')
             return result
 
         decorated_func.__name__ = func.__name__
@@ -39,31 +40,35 @@ class Matrix(list):
     horizontal = NaturalNumber()
     vertical = NaturalNumber()
 
-    def __init__(self, vertical: int, horizontal: int, math_object: MatrixType = None) -> None:
+    @logged()
+    def __init__(self, vertical: int, horizontal: int, math_object: MatrixType = None, set_auto=False) -> None:
         self.horizontal = horizontal
         self.vertical = vertical
 
         if math_object:
             super().__init__(math_object)
         else:
-            super().__init__([])
-            print(f'Fill in the lines ({self.vertical}✕{self.horizontal})')
-            for _ in range(self.vertical):
-                data = input().split()
-                if len(row := list(map(lambda el: float(el), data))) != self.horizontal:
-                    raise ValueError('Incorrect data input')
-                self.append(row)
+            if set_auto:
+                super().__init__([[randint(-10, 10) for _ in range(horizontal)] for _ in range(vertical)])
+            else:
+                super().__init__([])
+                print(f'Fill in the lines ({self.vertical}✕{self.horizontal})')
+                for _ in range(self.vertical):
+                    data = input().split()
+                    if len(row := list(map(lambda el: float(el), data))) != self.horizontal:
+                        raise ValueError('Incorrect data input')
+                    self.append(row)
 
     @staticmethod
     def is_vector(matrix):
         return True if matrix.vertical == 1 else False
 
+    @logged()
     def transpose(self) -> 'Matrix':
-        vertical = self.horizontal
-        horizontal = self.vertical
-        matrix = [[self[column][row] for column in range(horizontal)] for row in range(vertical)]
-        return Matrix(vertical, horizontal, matrix)
+        matrix = [[self[row][column] for row in range(self.vertical)] for column in range(self.horizontal)]
+        return Matrix(self.horizontal, self.vertical, math_object=matrix)
 
+    @logged()
     def __repr__(self) -> str:
         string = '\n'
         for row in range(self.vertical):
@@ -80,46 +85,35 @@ MathType = Union[Matrix, float, int]
 class MatrixCalculator:
 
     @staticmethod
-    def _initialize_empty_matrix(vertical: int):
-        return [[] for _ in range(vertical)]
-
-    @staticmethod
-    def search_max_or_min(a: Matrix, operator) -> NumericType:
+    @logged()
+    def search_max_or_min(a: Matrix, operation) -> NumericType:
         if not Matrix.is_vector(a):
             raise ArithmeticError(f'Not a vector {a=}')
 
         a = a[0]
-        result = a[0]
-        for element in a[1:]:
-            if operator(element, result):
-                result = element
-
-        return result
+        return max(a) if operation == 'max' else min(a)
 
     @staticmethod
+    @logged()
     def _scalar_product(a: Matrix, b: Matrix) -> NumericType:
-        if not Matrix.is_vector(a):
-            raise ArithmeticError(f'Not a vector {a=}')
+        return sum(map(lambda a_elem, b_elem: a_elem * b_elem, a[0], b[0]))
 
-        return sum(map(lambda a_elem, b_elem: a_elem*b_elem, a[0], b[0]))
-
-    def _constant_mul(self, constant: NumericType, a: Matrix) -> Matrix:
-        matrix = [[constant*a[row][column] for column in range(a.horizontal)] for row in range(a.vertical)]
-
+    @staticmethod
+    @logged()
+    def _constant_mul(constant: NumericType, a: Matrix) -> Matrix:
+        matrix = [[constant * a[row][column] for column in range(a.horizontal)] for row in range(a.vertical)]
         return Matrix(a.vertical, a.horizontal, matrix)
 
+    @logged()
     def _matrix_mul(self, a: Matrix, b: Matrix) -> MathType:
-        if a.vertical == 1 and b.vertical == 1:
+        if a.vertical == 1 and b.vertical == 1 and a.horizontal == b.horizontal:
             return self._scalar_product(a, b)
+
         elif a.horizontal != b.vertical:
             raise ArithmeticError(
                 'The number of columns in the first matrix should equal the number of rows in the second')
 
-        matrix = self._initialize_empty_matrix(a.vertical)
-        for i, row in enumerate(a):
-            for j, column in enumerate(b.transpose()):
-                matrix[i].append(sum(r * c for r, c in zip(row, column)))
-
+        matrix = [[sum(r_a * r_b for r_a, r_b in zip(row_a, row_b)) for row_b in b.transpose()] for row_a in a]
         return Matrix(a.vertical, b.horizontal, matrix)
 
     def _multiply(self, a: MathType, b: MathType) -> MathType:
@@ -145,15 +139,13 @@ class MatrixCalculator:
         else:
             raise ArithmeticError('Matrices cannot be divided')
 
-    def _matrix_add_or_sub(self, a: Matrix, operator, b: Matrix) -> Matrix:
+    @staticmethod
+    @logged()
+    def _matrix_add_or_sub(a: Matrix, operator, b: Matrix) -> Matrix:
         if a.vertical != b.vertical or a.horizontal != b.horizontal:
             raise ArithmeticError('The number of rows and columns must be the same')
-
-        matrix = self._initialize_empty_matrix(a.vertical)
-        for row in range(a.vertical):
-            for column in range(a.horizontal):
-                matrix[row].append(operator(a[row][column], b[row][column]))
-
+        # c - column; r - row
+        matrix = [[operator(a[r][c], b[r][c]) for c in range(a.horizontal)] for r in range(a.vertical)]
         return Matrix(a.vertical, a.horizontal, matrix)
 
     def _add_or_sub(self, a: MathType, operator, b: MathType) -> MathType:
@@ -175,8 +167,8 @@ class MatrixCalculator:
         }
 
         operations = {
-            'max': lambda: self.search_max_or_min(a, gt),
-            'min': lambda: self.search_max_or_min(a, lt)
+            'max': lambda: self.search_max_or_min(a, 'max'),
+            'min': lambda: self.search_max_or_min(a, 'min')
         }
 
         if req_func := operators.get(operation):
@@ -185,3 +177,15 @@ class MatrixCalculator:
             return req_func()
         else:
             raise ArithmeticError('Unknown operation received')
+
+
+if __name__ == '__main__':
+    calc = MatrixCalculator()
+
+    v1 = Matrix(1, 30000, set_auto=True)
+    v2 = Matrix(1, 30000, set_auto=True)
+    calc.controller(v1, '-', v2)
+
+    # m1 = Matrix(2, 2)
+    # m2 = Matrix(2, 2)
+    # print(calc.controller(m1, '*', m2))
