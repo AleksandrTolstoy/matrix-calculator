@@ -6,11 +6,11 @@ from typing import List, Optional, Union, Any
 def logged(time_format='%b %d %Y - %H:%M:%S', separator=''):
     def decorator(func):
         def decorated_func(*args, **kwargs):
-            print(f'{separator}- Running <{func.__name__}> on {time.strftime(time_format)}')
+            print(f'{separator}- Running <{func.__qualname__}> on {time.strftime(time_format)}')
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            print(f'- Finished <{func.__name__}>, execution time = {end_time - start_time}s{separator}')
+            print(f'- Finished class.<{func.__qualname__}>, execution time = {end_time - start_time}s{separator}')
             return result
 
         decorated_func.__name__ = func.__name__
