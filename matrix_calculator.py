@@ -12,7 +12,7 @@ def logged(time_format='%b %d %Y - %H:%M:%S', separator=''):
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            print(f'- Finished class.<{func.__qualname__}>, execution time = {end_time - start_time}s{separator}')
+            print(f'- Finished <{func.__qualname__}>, execution time = {end_time - start_time}s{separator}')
             return result
         return decorated_func
     return decorator
